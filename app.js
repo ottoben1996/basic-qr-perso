@@ -15,7 +15,7 @@ const DEFAULT_CONSTANT = "QII";
 const GOLDEN = {
   cardNumber: "V00347833",
   deviceId: "8d20fc96-1b0e-4982-8292-e97caed114ec",
-  guid: "2L8",
+  constant: "2L8",
   iat: 1720878864,
 };
 
@@ -57,7 +57,7 @@ const DEMO = params.get("demo") === "1";
 const FROZEN = params.get("frozen") === "1"; // horloge figée (tests)
 
 let state = load();
-let current = null; // { payload, iat, guid }
+let current = null; // { payload, iat, constant }
 let wakeLock = null;
 let tickHandle = null;
 let lastRenderKey = "";
@@ -125,12 +125,10 @@ function renderQr(payload) {
 
 async function refreshCode(force = false) {
   const iat = nowSec();
-  const guid = DEMO && FROZEN ? GOLDEN.guid : null;
   const res = await buildPayload({
     cardNumber: state.cardNumber,
     deviceId: state.deviceId,
-    constant: state.constant,
-    guid: guid || undefined,
+    constant: DEMO && FROZEN ? GOLDEN.constant : state.constant,
     iat,
   });
   current = res;
