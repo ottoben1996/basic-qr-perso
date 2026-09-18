@@ -1,4 +1,4 @@
-const CACHE = "basicqr-v5";
+const CACHE = "basicqr-v6";
 const SHELL = [
   "./",
   "./index.html",
