@@ -21,11 +21,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Basic QR" />
     <title>Basic QR — accès salle</title>
-    <script src="./src/theme-boot.js?v=12"></script>
-    <link rel="manifest" href="./manifest.webmanifest?v=12" />
+    <script src="./src/theme-boot.js?v=13"></script>
+    <link rel="manifest" href="./manifest.webmanifest?v=13" />
     <link rel="apple-touch-icon" href="./icons/icon-192.png" />
     <link rel="icon" href="./icons/icon-192.png" />
-    <link rel="stylesheet" href="./styles.css?v=12" />
+    <link rel="stylesheet" href="./styles.css?v=13" />
   </head>
   <body>
     <div class="app">
@@ -83,10 +83,10 @@
                   <span class="step-state" id="stepQrState">à faire</span>
                 </div>
                 <p class="step-desc" id="stepQrDesc">
-                  Fais une capture d’écran du QR de l’appli officielle, on y lit ta clé.
+                  Basic-Fit bloque les captures : photographie l’écran avec un autre téléphone.
                 </p>
                 <div class="step-actions">
-                  <button class="btn" id="shotBtn" type="button">Importer une capture</button>
+                  <button class="btn" id="shotBtn" type="button">Importer une image</button>
                   <button class="link-btn" id="qrHelp" type="button">Pourquoi ?</button>
                 </div>
               </div>
@@ -229,7 +229,8 @@
         </button>
       </header>
       <p class="sheet-text">
-        Ouvre l’appli Basic-Fit, affiche ton QR, fais une capture d’écran, puis choisis-la
+        L’appli Basic-Fit bloque les captures d’écran. Affiche ton QR sur un autre
+        appareil, ou photographie l’écran avec un autre téléphone, puis choisis l’image
         ici.
       </p>
       <div class="scan-frame" id="scanFrame" hidden>
@@ -238,7 +239,7 @@
       <p class="field-note" id="scanNote" aria-live="polite"></p>
       <input type="file" id="scanFile" accept="image/*" hidden />
       <div class="sheet-actions">
-        <button class="btn primary" id="scanPick" type="button">Choisir une capture</button>
+        <button class="btn primary" id="scanPick" type="button">Choisir une image</button>
         <button class="btn" id="scanCam" type="button">Utiliser la caméra</button>
       </div>
     </dialog>
@@ -321,7 +322,7 @@
       <p class="noscript">Basic QR a besoin de JavaScript pour calculer le code, en local.</p>
     </noscript>
 
-    <script src="./src/qrcode.js?v=12"></script>
-    <script type="module" src="./app.js?v=12"></script>
+    <script src="./src/qrcode.js?v=13"></script>
+    <script type="module" src="./app.js?v=13"></script>
   </body>
 </html>

@@ -9,8 +9,8 @@ import {
   validateCard,
   validateConstant,
   validateDevice,
-} from "./src/core.js?v=12";
-import { cameraAvailable, decodeFile, startCamera } from "./src/scan.js?v=12";
+} from "./src/core.js?v=13";
+import { cameraAvailable, decodeFile, startCamera } from "./src/scan.js?v=13";
 
 const STORE = "basicqr.v2";
 const LEGACY_STORE = "basicqr.v1";
@@ -235,15 +235,19 @@ function renderStart() {
         : `Clé ${state.constant} enregistrée.`;
   } else if (linked) {
     els.stepQrDesc.textContent =
-      "Pas encore lue. Le QR risque d’être refusé au portique.";
+      "Pas encore lue. Sans clé, le portique peut refuser.";
   } else {
     els.stepQrDesc.textContent =
-      "Fais une capture d’écran du QR de l’appli officielle, on y lit ta clé.";
+      "Basic-Fit bloque les captures : photographie l’écran avec un autre téléphone.";
   }
 
   els.showQrBtn.disabled = !linked;
   els.showQrBtn.textContent = "Afficher mon QR";
-  els.ctaHint.textContent = linked ? "" : "Commence par l’étape 1.";
+  els.ctaHint.textContent = !linked
+    ? "Commence par l’étape 1."
+    : constant
+      ? ""
+      : "Tu peux quand même continuer.";
 }
 
 /* --------------------------------------------------------------- rendu QR */
@@ -578,7 +582,7 @@ function openScan(mode = "file") {
 async function startScanCamera() {
   if (camera) return;
   if (!cameraAvailable()) {
-    els.scanNote.textContent = "Caméra indisponible : choisis plutôt une capture d’écran.";
+    els.scanNote.textContent = "Caméra indisponible : choisis plutôt une image.";
     els.scanNote.className = "field-note danger";
     return;
   }
@@ -593,8 +597,8 @@ async function startScanCamera() {
     els.scanFrame.hidden = true;
     els.scanNote.textContent =
       err?.name === "NotAllowedError"
-        ? "Accès caméra refusé. Tu peux importer une capture d’écran."
-        : "Caméra indisponible. Tu peux importer une capture d’écran.";
+        ? "Accès caméra refusé. Tu peux importer une image."
+        : "Caméra indisponible. Tu peux importer une image.";
     els.scanNote.className = "field-note danger";
   }
 }
@@ -628,7 +632,7 @@ els.scanFile.addEventListener("change", async () => {
   const value = await decodeFile(file);
   if (!value) {
     els.scanNote.textContent =
-      "QR illisible. Recadre la capture sur le QR, ou refais-la avec l’écran bien droit.";
+      "QR illisible. Recadre l’image sur le QR, ou refais la photo avec l’écran bien droit.";
     els.scanNote.className = "field-note danger";
     return;
   }
@@ -745,13 +749,16 @@ const HELP = {
       <p>Chaque QR Basic-Fit contient une clé propre à ton compte. C’est le
       3ᵉ champ de la chaîne : <code>GM2:carte:clé:horodatage:hash</code>.</p>
       <p>Elle ne change pas : une seule lecture suffit, définitivement.</p>
+      <p><strong>L’appli Basic-Fit bloque les captures d’écran.</strong> Deux façons
+      de lire la clé :</p>
       <ol>
-        <li>Ouvre l’appli Basic-Fit sur l’écran d’accès.</li>
-        <li>Fais une capture d’écran.</li>
-        <li>Ici, appuie sur « Importer une capture » et choisis l’image.</li>
+        <li>Affiche ton QR dans l’appli Basic-Fit sur un autre appareil (tablette,
+        ancien téléphone), puis scanne-le avec la caméra.</li>
+        <li>Ou photographie l’écran avec un autre téléphone, puis importe la photo
+        ici.</li>
       </ol>
-      <p>Tu peux aussi viser avec la caméra un QR affiché sur un autre écran ou
-      imprimé sur ta carte.</p>
+      <p>Sans clé, Basic QR utilise <code>QII</code> : ça peut suffire, mais le
+      portique peut refuser.</p>
     `,
   },
   trouble: {
@@ -759,8 +766,8 @@ const HELP = {
     body: `
       <section>
         <h3>Le portique refuse le QR</h3>
-        <p>La clé est probablement fausse. Refais l’étape 2 avec une capture
-        récente du QR de l’appli officielle.</p>
+        <p>La clé est probablement fausse. Refais l’étape 2 avec une photo
+        récente de l’écran du QR de l’appli officielle.</p>
       </section>
       <section>
         <h3>Le QR ne s’affiche pas</h3>

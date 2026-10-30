@@ -8,11 +8,13 @@ le téléphone. Aucun serveur, aucune requête réseau, aucune donnée envoyée.
 La v1 demandait trois valeurs techniques, dont un UUID à retrouver à la main. La v2 part du principe
 que personne ne doit voir un identifiant technique.
 
-- **Deux gestes à faire une fois** : coller le lien de connexion, puis importer une capture du QR
+- **Deux gestes à faire une fois** : coller le lien de connexion, puis importer une image du QR
   de l'appli officielle. L'appli détecte seule ce qu'elle peut extraire, y compris dans un JSON,
   un texte libre ou une charge utile `GM2:…`.
-- **Lecture du QR officiel par l'image** : capture d'écran importée, ou caméra. Le décodeur est
-  embarqué (jsQR en secours de `BarcodeDetector`), donc ça marche aussi sur iPhone.
+- **Lecture du QR officiel par l'image** : photo de l'écran ou capture importée, ou caméra. Le
+  décodeur est embarqué (jsQR en secours de `BarcodeDetector`), donc ça marche aussi sur iPhone.
+  Sur Android, l'appli Basic-Fit bloque les captures (`FLAG_SECURE`) : on photographie l'écran
+  avec un autre téléphone, ou on scanne le QR affiché sur un autre appareil.
 - **Interface réduite** : un écran d'accueil en deux étapes, un écran QR dédié, des réglages
   cachés derrière une feuille.
 - **Thème automatique**, respect de `prefers-color-scheme`, contrastes AA.
