@@ -12,7 +12,7 @@ function loadJsQr() {
   if (!jsQrPromise) {
     jsQrPromise = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "./src/jsQR.js";
+      s.src = "./src/jsQR.js?v=12";
       s.onload = () => (globalThis.jsQR ? resolve(globalThis.jsQR) : reject(new Error("jsQR indisponible")));
       s.onerror = () => reject(new Error("jsQR introuvable"));
       document.head.appendChild(s);

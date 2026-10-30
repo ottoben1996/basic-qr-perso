@@ -9,8 +9,8 @@ import {
   validateCard,
   validateConstant,
   validateDevice,
-} from "./src/core.js";
-import { cameraAvailable, decodeFile, startCamera } from "./src/scan.js";
+} from "./src/core.js?v=12";
+import { cameraAvailable, decodeFile, startCamera } from "./src/scan.js?v=12";
 
 const STORE = "basicqr.v2";
 const LEGACY_STORE = "basicqr.v1";

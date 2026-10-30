@@ -1,16 +1,16 @@
-const CACHE = "basicqr-v11";
+const CACHE = "basicqr-v12";
 const SHELL = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./src/core.js",
-  "./src/scan.js",
-  "./src/theme-boot.js",
-  "./src/qrcode.js",
-  "./src/fonts/archivo-latin.woff2",
-  "./src/fonts/archivo-latin-ext.woff2",
-  "./manifest.webmanifest",
+  "./styles.css?v=12",
+  "./app.js?v=12",
+  "./src/core.js?v=12",
+  "./src/scan.js?v=12",
+  "./src/theme-boot.js?v=12",
+  "./src/qrcode.js?v=12",
+  "./src/fonts/archivo-latin.woff2?v=12",
+  "./src/fonts/archivo-latin-ext.woff2?v=12",
+  "./manifest.webmanifest?v=12",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
 ];
