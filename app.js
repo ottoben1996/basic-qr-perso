@@ -9,8 +9,8 @@ import {
   validateCard,
   validateConstant,
   validateDevice,
-} from "./src/core.js?v=13";
-import { cameraAvailable, decodeFile, startCamera } from "./src/scan.js?v=13";
+} from "./src/core.js?v=14";
+import { cameraAvailable, decodeFile, startCamera } from "./src/scan.js?v=14";
 
 const STORE = "basicqr.v2";
 const LEGACY_STORE = "basicqr.v1";
@@ -931,6 +931,9 @@ async function boot() {
 
   els.offlineBadge.hidden = navigator.onLine;
   if (!("wakeLock" in navigator)) els.wakeBtn.hidden = true;
+  if (!document.documentElement.requestFullscreen || document.fullscreenEnabled === false) {
+    els.fullscreenBtn.hidden = true;
+  }
   renderStart();
 
   if (hasAccount()) {
