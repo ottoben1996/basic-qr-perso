@@ -1,10 +1,12 @@
-// core.js — logique pure de génération du QR d'accès Basic-Fit.
-// Aucune dépendance, aucun appel réseau. Testable sous Node (WebCrypto global).
+// core.js — logique pure du QR d'accès. Aucune dépendance, aucun appel réseau.
+// Testable sous Node (WebCrypto global) et dans le navigateur.
 
 const GUID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-// Convention observée sur les numéros de carte Basic-Fit : « V » suivi de 8 à 10 chiffres.
+
+// Numéros de carte observés : « V » suivi de 8 à 10 chiffres.
 const CARD_RE = /^V\d{8,10}$/i;
-// Deux formats de deviceId observés dans l'application officielle :
+
+// Deux formats d'identifiant d'appareil observés dans l'application :
 //  - UUID v4 (ancienne version, ex. 8d20fc96-1b0e-4982-8292-e97caed114ec)
 //  - identifiant « THIS_DEVICE_ID_V2 » (version actuelle) : J + 36 hexadécimaux
 const DEVICE_UUID_RE =
@@ -13,6 +15,12 @@ const DEVICE_J_RE = /^J[0-9a-f]{16,48}$/i;
 
 /** Constante de club/région présente dans le QR (3 caractères observés, ex. « QII »). */
 const CONSTANT_RE = /^[A-Z0-9]{2,6}$/;
+
+/** Charge utile telle qu'encodée dans le QR : GM2:<carte>:<constante>:<iat>:<hash>. */
+const PAYLOAD_RE = /^GM2:([^:]+):([^:]+):(\d{9,12}):([0-9A-F]{8})$/i;
+
+/** Valeur par défaut quand la constante n'a pas pu être lue. */
+export const DEFAULT_CONSTANT = "QII";
 
 /** Identifiant aléatoire court (3 caractères) régénéré à chaque scan. */
 export function randomGuid(len = 3, rng = Math.random) {
@@ -37,9 +45,7 @@ export async function generateHash(cardNumber, guid, iat, deviceId) {
 
 /**
  * Charge utile encodée dans le QR : GM2:<carte>:<constante>:<timestamp>:<hash>.
- * La constante est la valeur observée dans les QR de l'application (fixe pour un
- * compte/club) ; si elle est absente, on retombe sur un tirage aléatoire comme dans
- * la première analyse publique du format.
+ * Si la constante est absente, on retombe sur un tirage aléatoire.
  */
 export async function buildPayload({ cardNumber, deviceId, constant, iat }) {
   const c = String(constant || "").trim() || randomGuid();
@@ -48,8 +54,12 @@ export async function buildPayload({ cardNumber, deviceId, constant, iat }) {
   return { payload: `GM2:${cardNumber}:${c}:${ts}:${hash}`, constant: c, iat: ts, hash };
 }
 
+export function normalizeCard(value) {
+  return String(value || "").trim().toUpperCase().replace(/\s+/g, "");
+}
+
 export function validateCard(value) {
-  return CARD_RE.test(String(value || "").trim());
+  return CARD_RE.test(normalizeCard(value));
 }
 
 export function validateDevice(value) {
@@ -59,6 +69,23 @@ export function validateDevice(value) {
 
 export function validateConstant(value) {
   return CONSTANT_RE.test(String(value || "").trim().toUpperCase());
+}
+
+/**
+ * Lit une charge utile GM2 (celle qu'on trouve dans le QR de l'application
+ * officielle). Sert à récupérer la carte et surtout la constante du compte.
+ */
+export function parsePayload(text) {
+  const m = String(text || "").trim().match(PAYLOAD_RE);
+  if (!m) return null;
+  const [, card, constant, iat, hash] = m;
+  if (!validateCard(card)) return null;
+  return {
+    cardNumber: normalizeCard(card),
+    constant: constant.toUpperCase(),
+    iat: Number(iat),
+    hash: hash.toUpperCase(),
+  };
 }
 
 /**
@@ -74,7 +101,7 @@ export function parsePrefill(search) {
     return {};
   }
   const out = {};
-  const card = (params.get("card") || params.get("carte") || "").trim().toUpperCase();
+  const card = normalizeCard(params.get("card") || params.get("carte") || "");
   const device = (params.get("device") || params.get("deviceId") || params.get("dev") || "").trim();
   const constant = (params.get("constant") || params.get("const") || "").trim().toUpperCase();
   if (validateCard(card)) out.cardNumber = card;
@@ -85,7 +112,8 @@ export function parsePrefill(search) {
 
 /**
  * Extrait carte + deviceId depuis :
- *  - une URL de connexion Basic-Fit (liens `card-Number=` / `deviceID=` / hash `#...`)
+ *  - une URL de connexion (liens `card-Number=` / `deviceID=` / hash `#...`)
+ *  - un JSON collé depuis les données locales de l'application
  *  - ou une saisie libre "V012345678 8d20fc96-1b0e-4982-8292-e97caed114ec"
  */
 export function parseCredentials(raw) {
@@ -96,9 +124,14 @@ export function parseCredentials(raw) {
   const collect = (key, value) => {
     if (!value) return;
     const k = String(key).toLowerCase().replace(/[^a-z]/g, "");
-    const clean = decodeURIComponent(String(value)).replace(/^["']|["']$/g, "").trim();
+    let clean;
+    try {
+      clean = decodeURIComponent(String(value)).replace(/^["']|["']$/g, "").trim();
+    } catch {
+      clean = String(value).replace(/^["']|["']$/g, "").trim();
+    }
     if (k.includes("card") && !found.cardNumber && validateCard(clean)) {
-      found.cardNumber = clean.toUpperCase();
+      found.cardNumber = normalizeCard(clean);
     } else if (k.includes("device") && !found.deviceId && validateDevice(clean)) {
       found.deviceId = clean;
     }
@@ -133,7 +166,46 @@ export function parseCredentials(raw) {
   return found;
 }
 
+/**
+ * Point d'entrée unique : accepte à peu près tout ce que l'utilisateur peut
+ * coller ou scanner, et renvoie ce qui a pu être reconnu.
+ * `sources` indique d'où vient chaque valeur, pour le diagnostic.
+ */
+export function parseAny(raw) {
+  const text = String(raw || "").trim();
+  const out = { cardNumber: null, deviceId: null, constant: null, sources: [] };
+  if (!text) return out;
+
+  const payload = parsePayload(text);
+  if (payload) {
+    out.cardNumber = payload.cardNumber;
+    out.constant = payload.constant;
+    out.sources.push("qr");
+    return out;
+  }
+
+  const creds = parseCredentials(text);
+  out.cardNumber = creds.cardNumber;
+  out.deviceId = creds.deviceId;
+  if (creds.cardNumber || creds.deviceId) out.sources.push("link");
+
+  // Une constante collée seule (« QII ») n'est acceptée que si l'entrée ne
+  // contient rien d'autre : sinon le risque de fausse détection est trop grand.
+  if (!out.cardNumber && !out.deviceId && validateConstant(text)) {
+    out.constant = text.toUpperCase();
+    out.sources.push("constant");
+  }
+
+  return out;
+}
+
 export function maskCard(cardNumber) {
   if (!cardNumber) return "";
   return cardNumber.slice(0, 5) + "•".repeat(Math.max(0, cardNumber.length - 5));
+}
+
+export function maskDevice(deviceId) {
+  if (!deviceId) return "";
+  if (deviceId.length <= 8) return "•".repeat(deviceId.length);
+  return deviceId.slice(0, 4) + "…" + deviceId.slice(-4);
 }

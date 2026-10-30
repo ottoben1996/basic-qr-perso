@@ -1,0 +1,11 @@
+{
+  "name": "basic-qr",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "QR d'accès calculé localement, hors ligne.",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node tools/devserver.mjs 8080"
+  }
+}
